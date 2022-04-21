@@ -10,6 +10,7 @@ public class UserDaoImpl implements UserDao{
 
     @Override
     public List<User> getUsers() {
+        String var;
         return null;
     }
 }
