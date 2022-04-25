@@ -1,9 +1,13 @@
 package com.cursojava.curso.controllers;
 
+import com.cursojava.curso.dao.UserDao;
 import com.cursojava.curso.models.User;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.cursojava.curso.utils.JWTUtil;
+import de.mkammerer.argon2.Argon2;
+import de.mkammerer.argon2.Argon2Factory;
+import org.aspectj.apache.bcel.classfile.Method;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,42 +15,21 @@ import java.util.List;
 @RestController
 public class UserController {
 
+    @Autowired
+    UserDao userDao;
+
+    @Autowired
+    JWTUtil jwtUtil;
+
     @RequestMapping(value="prueba")
     public List<String> prueba(){
         return List.of("prueba","prueba2");
     }
 
     @RequestMapping(value="users")
-    public List<User> getUsers(){
-        List<User> users = new ArrayList<>();
-        User u1=new User();
-        u1.setId(1L);
-        u1.setName("Jose");
-        u1.setLastname("Chandia");
-        u1.setEmail("jose05chandia@gmail.com");
-        u1.setPhone("993245344");
-        u1.setPassword("1234");
-        users.add(u1);
-
-        User u2=new User();
-        u2.setId(2L);
-        u2.setName("Jose");
-        u2.setLastname("Chandia");
-        u2.setEmail("jose05chandia@gmail.com");
-        u2.setPhone("993245344");
-        u2.setPassword("1234");
-        users.add(u2);
-
-        User u3=new User();
-        u3.setId(3L);
-        u3.setName("Jose");
-        u3.setLastname("Chandia");
-        u3.setEmail("jose05chandia@gmail.com");
-        u3.setPhone("993245344");
-        u3.setPassword("1234");
-        users.add(u3);
-        return users;
-
+    public List<User> getUsers(@RequestHeader(value="Authorization") String token){
+        if(!validateToken(token)){return null;}
+        return userDao.getUsers();
     }
 
     @RequestMapping(value="user/{id}")
@@ -73,16 +56,24 @@ public class UserController {
         return u;
     }
 
-    @RequestMapping(value="delete/{id}")
-    public User delete(@PathVariable Long id){
-        User u=new User();
-        u.setId(id);
-        u.setName("Jose");
-        u.setLastname("Chandia");
-        u.setEmail("jose05chandia@gmail.com");
-        u.setPhone("993245344");
-        u.setPassword("1234");
-        return u;
+    @RequestMapping(value="create", method= RequestMethod.POST)
+    public void create(@RequestBody User user){
+
+        Argon2 argon2= Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
+        String hash=argon2.hash(1,1024,1,user.getPassword());
+        user.setPassword(hash);
+        userDao.create(user);
+    }
+    @RequestMapping(value="delete/{id}", method= RequestMethod.DELETE)
+    public void delete(@PathVariable Long id,@RequestHeader(value="Authorization") String token){
+        if(!validateToken(token)){return;}
+        userDao.delete(id);
+    }
+
+
+    public boolean validateToken(String token){
+        String idUser=jwtUtil.getKey(token);
+        return idUser!=null;
     }
 
 }

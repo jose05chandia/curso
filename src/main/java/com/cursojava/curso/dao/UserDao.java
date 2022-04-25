@@ -5,5 +5,12 @@ import com.cursojava.curso.models.User;
 import java.util.List;
 
 public interface UserDao {
-    public List<User> getUsers();
+    List<User> getUsers();
+    User getUser(Long id);
+    void update(Long id);
+    void delete(Long id);
+
+    void create(User user);
+
+    User login(User user);
 }
